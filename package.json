@@ -1,0 +1,25 @@
+{
+   "name": "comlink-webrtc",
+   "version": "0.0.1",
+   "description": "https://glitch.com/edit/#!/comlink-webrtc?path=static/webrtc-dialup.js:10:0",
+   "main": "server.js",
+   "scripts": {
+      "start": "node server.js"
+   },
+   "dependencies": {
+      "express": "^4.15.5",
+      "redis": "^2.8.0"
+   },
+   "engines": {
+      "node": "8.x"
+   },
+   "repository": {
+      "url": "https://glitch.com/edit/#!/comlink-webrtc?path=static/webrtc-dialup.js:10:0"
+   },
+   "license": "MIT",
+   "keywords": [
+      "node",
+      "glitch",
+      "express"
+   ]
+}

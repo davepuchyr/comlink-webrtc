@@ -1,0 +1,127 @@
+<!doctype html>
+<style>
+   html,
+   body {
+      font-size: 18px;
+      margin: 0;
+      border: 0;
+      padding: 0;
+   }
+
+   .panel {
+
+      min-width: 100vw;
+      min-height: 100vh;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+   }
+
+   body:not(.owner):not(.client) #roomselect {
+      display: flex;
+   }
+
+   body.owner .panel,
+   body.client .panel {
+      display: none;
+   }
+
+   body.owner #owner.panel {
+      display: flex;
+   }
+
+   body.client #client.panel {
+      display: flex;
+   }
+
+   .text {
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+   }
+</style>
+<div id="roomselect" class="panel">
+   <div class="text">
+      <p>
+         Make two tabs enter the same room and one will be able to control the other. These two tabs can be in different browsers
+         or even on different machines provided they are on the same network and support WebRTC. I did not set up a TURN
+         server.
+      </p>
+   </div>
+   <input type="text" placeholder="Room name">
+   <button>Enter</button>
+</div>
+<div id="client" class="panel">
+   <p>
+      This window can be controlled by the other client
+   </p>
+</div>
+<div id="owner" class="panel">
+   <p>
+      Change background color:
+   </p>
+   <label>
+      R:
+      <input type="range" min="0" max="255" id="r">
+   </label>
+   <label>
+      G:
+      <input type="range" min="0" max="255" id="g">
+   </label>
+   <label>
+      B:
+      <input type="range" min="0" max="255" id="b">
+   </label>
+   <div class="text">
+      <p>
+         You can also open up DevTools and play with the proxy object in the console. It has the following methods:
+      </p>
+      <ul>
+         <li>
+            <code>`changeBackgroundColor(r, g, b)`</code>: Changes the other window’s background color</li>
+         <li>
+            <code>`log()`</code>: Logs something in the other window’s console.</li>
+         <li>
+            <code>`getWindow()`</code>: Returns a proxy to the other window’s window object.</li>
+      </ul>
+   </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/comlinkjs@2.3.0/comlink.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/comlinkjs@2.3.0/messagechanneladapter.global.js"></script>
+<script src="/webrtc-dialup.js"></script>
+<script>
+   ( function () {
+      const exposedThing = {
+         changeBackgroundColor: ( r, g, b ) => {
+            document.body.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+         },
+         log: console.log.bind( console ),
+         getWindow: _ => Comlink.proxyValue( window ),
+      };
+
+      const roomInput = document.querySelector( '#roomselect > input' );
+      document.querySelector( '#roomselect > button' ).onclick = async event => {
+         event.target.disabled = true;
+         event.target.textContent = 'Waiting for other participant...';
+         const room = roomInput.value;
+         if ( !room ) return;
+         const { channel, role } = await personInRoom( room );
+         document.body.classList.add( role );
+         const comlinkChannel = MessageChannelAdapter.wrap( channel );
+         if ( role === 'owner' ) {
+            proxy = Comlink.proxy( comlinkChannel );
+         } else {
+            Comlink.expose( exposedThing, comlinkChannel );
+         }
+      };
+
+      function getColor( id ) {
+         return document.getElementById( id ).value;
+      }
+
+      document.querySelector( '#owner' ).addEventListener( 'input', async _ => {
+         await proxy.changeBackgroundColor( getColor( 'r' ), getColor( 'g' ), getColor( 'b' ) );
+      } );
+   } )();
+</script>
